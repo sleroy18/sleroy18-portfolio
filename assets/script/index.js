@@ -1,110 +1,97 @@
-/*Interactivity to determine when an animated element in in view. In view elements trigger our animation*/
-$(document).ready(function() {
+$(document).ready(function () {
+    var opts = {
+        lines: 13, // The number of lines to draw
+        length: 38, // The length of each line
+        width: 17, // The line thickness
+        radius: 30, // The radius of the inner circle
+        scale: 1, // Scales overall size of the spinner
+        corners: 1, // Corner roundness (0..1)
+        color: '#ffffff', // CSS color or array of colors
+        fadeColor: 'transparent', // CSS color or array of colors
+        opacity: 0.25, // Opacity of the lines
+        rotate: 0, // The rotation offset
+        direction: 1, // 1: clockwise, -1: counterclockwise
+        speed: 1, // Rounds per second
+        trail: 60, // Afterglow percentage
+        fps: 20, // Frames per second when using setTimeout() as a fallback in IE 9
+        zIndex: 2e9, // The z-index (defaults to 2000000000)
+        className: 'spinner', // The CSS class to assign to the spinner
+        top: '50%', // Top position relative to parent
+        left: '42%', // Left position relative to parent
+        shadow: 'none', // Box-shadow for the lines
+        position: 'absolute', // Element positioning
+    };
 
-  //window and animation items
-  var animation_elements = $.find('.animation-element');
-  var web_window = $(window);
-
-  //check to see if any animation containers are currently in view
-  function check_if_in_view() {
-    //get current window information
-    var window_height = web_window.height();
-    var window_top_position = web_window.scrollTop();
-    var window_bottom_position = (window_top_position + window_height);
-
-    //iterate through elements to see if its in view
-    $.each(animation_elements, function() {
-
-      //get the elements information
-      var element = $(this);
-      var element_height = $(element).outerHeight();
-      var element_top_position = $(element).offset().top;
-      var element_bottom_position = (element_top_position + element_height);
-
-      //check to see if this current container is visible (its viewable if it exists between the viewable space of the viewport)
-      if ((element_bottom_position >= window_top_position) && (element_top_position <= window_bottom_position)) {
-        element.addClass('in-view');
-      } else {
-        element.removeClass('in-view');
-      }
+    var target = document.getElementById('target');
+    var spinner = new Spinner(opts).spin(target);
+    spinner.el.id = "spinner";
+    target.appendChild(spinner.el);
+    var userFeed = new Instafeed({
+        get: 'user',
+        userId: '3070168689',
+        accessToken: '3070168689.e5b50d6.cc77dedac6004ad09101714989ebe6bb',
+        template: '<li><a href="{{link}}"><img class="instaPic" src="{{image}}" /></a></li>',
+        after: function () {
+            setTimeout(function () {
+                init();
+            }, 100);
+        }
     });
-  }
-
-  //on or scroll, detect elements in view
-  $(window).on('scroll resize', function() {
-      check_if_in_view()
-    })
-    //trigger our scroll event on initial load
-  $(window).trigger('scroll');
-
+    userFeed.run();
 });
 
-function exp(lang, years){
-  this.lang = lang;
-  this.years = years;
-}
 
-var expArr = [new exp('css', 4), new exp('html', 4), new exp('js',2), new exp('java', 3), new exp("cSharp", 2), 
-  new exp("dotNet", 2), new exp('sql', 3), new exp('node',1), new exp('jquery',2), new exp('bootstrap', 2)];
-expArr.forEach(function(val){
-  var bar = new ProgressBar.SemiCircle('#'+val.lang+'-body', {
-    strokeWidth: 6,
-    easing: 'easeInOut',
-    duration: 1400,
-    color: '#CA0035',
-    trailColor: '#eee',
-    trailWidth: 1,
-    svgStyle: null,
-    text: {
-      value: "<div class='inner-text'>"+val.years+" Years</div>",
-      alignToBottom: true
-    },
-  });
-  
-  bar.animate((val.years+1)/6);  // Number from 0.0 to 1.0
-})
+var init = function () {
+    document.getElementById("spinner").remove();
+    document.getElementById("innerScroll").style.display ="block";
+    var scroller = $('#scroller div.innerScrollArea');
+    var scrollerContent = scroller.children('ul');
+    scrollerContent.children().clone().appendTo(scrollerContent);
+    scrollerContent.children().clone().appendTo(scrollerContent);
+    var curX = 0;
+    scrollerContent.children().each(function () {
+        var $this = $(this);
+        $this.css('left', curX);
+        curX += $this.outerWidth(true);
+    });
+    var fullW = curX / 2;
+    var viewportW = scroller.width();
 
+    // Scrolling speed management
+    var controller = { curSpeed: 0, fullSpeed: 1 };
+    var $controller = $(controller);
+    var tweenToNewSpeed = function (newSpeed, duration) {
+        if (duration === undefined)
+            duration = 600;
+        $controller.stop(true).animate({ curSpeed: newSpeed }, duration);
+    };
 
+    // Pause on hover
+    scroller.hover(function () {
+        tweenToNewSpeed(0);
+    }, function () {
+        tweenToNewSpeed(controller.fullSpeed);
+    });
 
-
-// Hide submenus
-$('#body-row .collapse').collapse('hide'); 
-
-// Collapse/Expand icon
-$('#collapse-icon').addClass('fa-angle-double-left'); 
-
-// Collapse click
-$('[data-toggle=sidebar-colapse]').click(function(event) {
-  event.preventDefault();
-    SidebarCollapse();
-});
-
-function SidebarCollapse () {
-    $('.menu-collapsed').toggleClass('d-none');
-    $('.sidebar-submenu').toggleClass('d-none');
-    $('.submenu-icon').toggleClass('d-none');
-    
-    $('#sidebar-container').toggleClass('sidebar-expanded sidebar-collapsed');
-    $('#main').toggleClass('main-collapsed main-expanded');
-
-    // var main = $('#main');
-    // if(main.hasClass('main-collapsed')){
-    //     main.removeClass('main-collapsed');
-    //     main.addClass('main-expanded');
-    // }else{
-    //     main.removeClass('main-expanded');
-    //     main.addClass('main-collapsed');
-    // }
-
-    
-    // Treating d-flex/d-none on separators with title
-    var SeparatorTitle = $('.sidebar-separator-title');
-    if ( SeparatorTitle.hasClass('d-flex') ) {
-        SeparatorTitle.removeClass('d-flex');
-    } else {
-        SeparatorTitle.addClass('d-flex');
-    }
-    
-    // Collapse/Expand icon
-    $('#collapse-icon').toggleClass('fa-angle-double-left fa-angle-double-right');
+    // Scrolling management; start the automatical scrolling
+    var scrollSize = 180;
+    var curX;
+    var newX;
+    var doScroll = function () {
+        curX = scroller.scrollLeft();
+        newX = curX + controller.curSpeed;
+        if (curX == scrollSize) {
+            $('#instafeed li').first().clone().appendTo(scrollerContent);
+            $('#instafeed li').first().remove();
+            $('#instafeed').children().each(function (index, value) {
+                var $this = $(this);
+                $this.css('left', scrollSize * index);
+                curX += document.documentElement.clientWidth;//$this.outerWidth(true);
+            });
+            newX = 0;
+        }
+        scroller.scrollLeft(newX);
+    };
+    setInterval(doScroll, 20);
+    tweenToNewSpeed(controller.fullSpeed);
 }
